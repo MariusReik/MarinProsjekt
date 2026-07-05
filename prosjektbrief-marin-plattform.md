@@ -92,7 +92,7 @@ Primær persona: driftsleder/HMS-ansvarlig ved oppdrettsanlegg. Sekundært: havn
 ## 8. Risikoer og mottiltak
 
 - **AIS-datavolum:** Full norsk strøm er stor. Geografisk filter implementeres i uke 1, ikke senere.
-- **Scope creep:** Nye ideer skrives i backlog-seksjonen i README, aldri implementeres før v1 er ferdig.
+- **Scope creep:** Nye ideer opprettes som GitHub Issue med label `backlog`, aldri implementeres før v1 er ferdig.
 - **API-endringer/nedetid hos Barentswatch:** Ingest må tåle reconnect og lagre siste kjente tilstand; feil skal logges, ikke krasje pipeline.
 - **Tidsklemme (TA-jobb, thesis-oppstart):** Milepælene er ukesbaserte men fleksible; rekkefølgen er hellig, kalenderen er ikke.
 
@@ -101,6 +101,7 @@ Primær persona: driftsleder/HMS-ansvarlig ved oppdrettsanlegg. Sekundært: havn
 - 2026-07-05: Valgt marin sensorplattform over 6 alternative konsepter (scoret høyest på matrise: teknisk dybde, datatilgang, Bergen-relevans, B2B-potensial).
 - 2026-07-05: Anomali #1 = AIS-gap-deteksjon (regelbasert), ikke ML. ML utsatt til v2.
 - 2026-07-05: To-språks stack (TS ingest + Spring Boot API) valgt over ren TS for bredere CV-signal.
+- 2026-07-05: Arbeidsflyt = GitHub Flow: feature-branches + PR med squash merge til `main`; oppgaver og backlog som GitHub Issues (backlog flyttet fra README).
 
 ## 10. Åpne spørsmål
 
