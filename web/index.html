@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marin Ingest Demo</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2rem; }
+      pre { background: #f5f5f5; padding: 1rem; border-radius: 8px; }
+    </style>
+  </head>
+  <body>
+    <h1>Marin ingest positions</h1>
+    <button id="refresh">Refresh</button>
+    <pre id="output">Loading…</pre>
+
+    <script>
+      async function loadPositions() {
+        const output = document.getElementById('output');
+        try {
+          const response = await fetch('http://127.0.0.1:3000/positions');
+          const data = await response.json();
+          output.textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          output.textContent = 'Failed to load positions: ' + error.message;
+        }
+      }
+
+      document.getElementById('refresh').addEventListener('click', loadPositions);
+      loadPositions();
+    </script>
+  </body>
+</html>
