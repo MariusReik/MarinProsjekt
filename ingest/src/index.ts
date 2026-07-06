@@ -1,6 +1,7 @@
 import { pathToFileURL } from 'node:url';
 
 import { AISClient } from './services/ais-client.js';
+import { createIngestLoop } from './loop.js';
 import { JsonFileStore } from './storage/json-file-store.js';
 
 export interface IngestStartupOptions {
@@ -36,6 +37,15 @@ export async function startIngestService(options: IngestStartupOptions = {}): Pr
 
 async function main(): Promise<void> {
   await startIngestService();
+
+  const loop = createIngestLoop({
+    intervalMs: 60_000,
+    callback: async () => {
+      await startIngestService();
+    },
+  });
+
+  loop.start();
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

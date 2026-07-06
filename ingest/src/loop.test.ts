@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createIngestLoop } from './loop.js';
+import { startIngestService } from './index.js';
 
 test('createIngestLoop runs the callback on an interval and can stop', async () => {
   let runs = 0;
@@ -9,6 +10,30 @@ test('createIngestLoop runs the callback on an interval and can stop', async () 
     intervalMs: 20,
     callback: async () => {
       runs += 1;
+      if (runs >= 2) {
+        loop.stop();
+      }
+    },
+  });
+
+  loop.start();
+
+  await new Promise((resolve) => setTimeout(resolve, 80));
+
+  assert.equal(runs, 2);
+});
+
+test('createIngestLoop can trigger startup persistence repeatedly', async () => {
+  let runs = 0;
+  const loop = createIngestLoop({
+    intervalMs: 20,
+    callback: async () => {
+      runs += 1;
+      await startIngestService({
+        client: {
+          fetchLatestPositions: async () => [{ mmsi: 789, timestamp: '2026-07-06T00:00:00Z', latitude: 62, longitude: 7 }],
+        } as any,
+      });
       if (runs >= 2) {
         loop.stop();
       }
