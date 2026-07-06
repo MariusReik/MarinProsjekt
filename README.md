@@ -8,7 +8,7 @@ Se [prosjektbriefen](./prosjektbrief-marin-plattform.md) for scope, arkitektur o
 
 ## Status
 
-Uke 0 – repo-oppsett. Neste: Barentswatch API-klient og token-flyt (uke 1).
+Uke 1 – ingest-scaffold merget. Neste: Barentswatch token-flyt og AIS-strøm.
 
 ## Backlog
 
