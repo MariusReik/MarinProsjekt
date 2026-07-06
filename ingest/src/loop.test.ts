@@ -46,3 +46,23 @@ test('createIngestLoop can trigger startup persistence repeatedly', async () => 
 
   assert.equal(runs, 2);
 });
+
+test('createIngestLoop continues after callback errors', async () => {
+  let runs = 0;
+  const loop = createIngestLoop({
+    intervalMs: 20,
+    callback: async () => {
+      runs += 1;
+      if (runs === 1) {
+        throw new Error('boom');
+      }
+      loop.stop();
+    },
+  });
+
+  loop.start();
+
+  await new Promise((resolve) => setTimeout(resolve, 80));
+
+  assert.equal(runs, 2);
+});

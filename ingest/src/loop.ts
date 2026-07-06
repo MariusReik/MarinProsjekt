@@ -1,6 +1,7 @@
 export interface IngestLoopOptions {
   intervalMs: number;
   callback: () => Promise<void> | void;
+  onError?: (error: unknown) => void;
 }
 
 export interface IngestLoop {
@@ -12,17 +13,29 @@ export function createIngestLoop(options: IngestLoopOptions): IngestLoop {
   let timer: NodeJS.Timeout | undefined;
   let running = false;
 
+  const scheduleNext = () => {
+    if (!running) {
+      return;
+    }
+
+    timer = setTimeout(() => {
+      void run();
+    }, options.intervalMs);
+  };
+
   const run = async () => {
     if (!running) {
       return;
     }
 
-    await options.callback();
-
-    if (running) {
-      timer = setTimeout(() => {
-        void run();
-      }, options.intervalMs);
+    try {
+      await options.callback();
+    } catch (error) {
+      options.onError?.(error);
+    } finally {
+      if (running) {
+        scheduleNext();
+      }
     }
   };
 
