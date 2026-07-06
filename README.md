@@ -25,21 +25,6 @@ The web demo can be opened from [web/index.html](web/index.html) while the inges
 
 ## Backlog og neste steg
 
-Prioriterte arbeidspakker for prosjektet:
-
-1. Ingest hardening og observability
-   - robust feilhåndtering, retries og bedre logging
-   - stabil polling- og reconnect-flyt for Barentswatch
-
-2. Databaselagring og modellering
-   - komplett PostgreSQL-lagring for AIS-posisjoner
-   - schema for historiske spor, lokaliteter og anomalier
-
-3. API og dashboard
-   - REST-endepunkter for siste og historiske posisjoner
-   - enkel web-demo med kartvisning og filtrering
-
-4. Anomalideteksjon og varsling
-   - AIS-gap-detektering og første varsling via webhook/e-post
-
-Ideer utenfor v1 ligg som GitHub Issues med label `backlog` og implementeres først når v1 er ferdig.
+Alt arbeid spores som [GitHub Issues](../../issues): v1-oppgaver med label `v1`,
+ideer utenfor v1 med label [`backlog`](../../issues?q=is%3Aissue+label%3Abacklog) –
+de implementeres aldri før v1 er ferdig. Se prosjektbriefen for scope og milepæler.
