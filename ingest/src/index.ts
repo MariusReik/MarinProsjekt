@@ -5,10 +5,11 @@ import { AISClient } from './services/ais-client.js';
 import { createIngestLoop } from './loop.js';
 import { createLogger } from './logger.js';
 import { JsonFileStore } from './storage/json-file-store.js';
+import type { PositionStore } from './storage/storage.js';
 
 export interface IngestStartupOptions {
   client?: AISClient;
-  store?: JsonFileStore;
+  store?: PositionStore;
   logger?: ReturnType<typeof createLogger>;
 }
 
