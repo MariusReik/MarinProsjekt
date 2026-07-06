@@ -44,10 +44,19 @@ Primær persona: driftsleder/HMS-ansvarlig ved oppdrettsanlegg. Sekundært: havn
 ### Eksplisitt ikke i v1 (backlog/v2)
 
 - ML-basert anomalideteksjon (loitering-klassifisering, trajektorie-prediksjon)
-- Brukerkontoer, auth, multi-tenant
+- Brukerkontoer, auth og multi-tenant-arkitektur
 - Flere regioner enn Vestlandet
 - Bølge-/værdata utover enkel visning (korrelasjonsanalyse er v2)
-- Mobilapp, native varsler
+- Mobilapp og native varsler
+- Avansert dashboard-personalisering og flere brukerroller
+
+### Backlog for neste iterasjoner
+
+- Robust ingest- og reconnect-flyt for eksterne datakilder
+- Observability med metrikk, tracing og alerting
+- Mer sofistikert lagringsmodell for tidsserier og geospatiale spørringer
+- REST/WebSocket-API for historikk, live-data og lokaliteter
+- Web-dashboard med kart, filtre og enkel hendelsesoversikt
 
 ## 5. Arkitektur
 

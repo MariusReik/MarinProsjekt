@@ -5,10 +5,12 @@ import { AISClient } from './services/ais-client.js';
 import { createIngestLoop } from './loop.js';
 import { createLogger } from './logger.js';
 import { JsonFileStore } from './storage/json-file-store.js';
+import { LivePostgresStore } from './storage/live-postgres-store.js';
+import type { PositionStore } from './storage/storage.js';
 
 export interface IngestStartupOptions {
   client?: AISClient;
-  store?: JsonFileStore;
+  store?: PositionStore;
   logger?: ReturnType<typeof createLogger>;
 }
 
@@ -24,7 +26,7 @@ export async function startIngestService(options: IngestStartupOptions = {}): Pr
   const logger = options.logger ?? createLogger();
   const client = options.client ?? new AISClient();
   const positions = await client.fetchLatestPositions();
-  const store = options.store ?? new JsonFileStore();
+  const store = options.store ?? (process.env.DATABASE_URL ? new LivePostgresStore() : new JsonFileStore());
   const storedAt = await store.save(positions);
 
   const summary: IngestStartupSummary = {
