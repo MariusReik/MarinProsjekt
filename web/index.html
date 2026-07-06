@@ -3,26 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Marin Ingest Demo</title>
+    <title>Marin Ingest Map</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
     <style>
-      body { font-family: Arial, sans-serif; margin: 2rem; }
-      pre { background: #f5f5f5; padding: 1rem; border-radius: 8px; }
+      body { font-family: Arial, sans-serif; margin: 0; background: #f7f9fc; color: #123; }
+      .shell { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+      .topbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+      button { padding: 0.6rem 1rem; border: none; border-radius: 999px; background: #0f766e; color: white; cursor: pointer; }
+      #map { height: 70vh; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+      .status { margin-top: 0.75rem; color: #475569; }
     </style>
   </head>
   <body>
-    <h1>Marin ingest positions</h1>
-    <button id="refresh">Refresh</button>
-    <pre id="output">Loading…</pre>
+    <div class="shell">
+      <div class="topbar">
+        <div>
+          <h1>Marin ingest positions</h1>
+          <p>Live AIS positions from the ingest service.</p>
+        </div>
+        <button id="refresh">Refresh</button>
+      </div>
+      <div id="map"></div>
+      <div id="status" class="status">Loading positions…</div>
+    </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
+      const map = L.map('map').setView([60, 5], 3);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(map);
+
+      const status = document.getElementById('status');
+
       async function loadPositions() {
-        const output = document.getElementById('output');
+        status.textContent = 'Loading positions…';
         try {
           const response = await fetch('http://127.0.0.1:3000/positions');
           const data = await response.json();
-          output.textContent = JSON.stringify(data, null, 2);
+
+          map.eachLayer((layer) => {
+            if (layer instanceof L.Marker) {
+              map.removeLayer(layer);
+            }
+          });
+
+          if (!Array.isArray(data) || data.length === 0) {
+            status.textContent = 'No positions available yet.';
+            return;
+          }
+
+          data.forEach((position) => {
+            if (Number.isFinite(position.latitude) && Number.isFinite(position.longitude)) {
+              L.marker([position.latitude, position.longitude])
+                .addTo(map)
+                .bindPopup(`MMSI ${position.mmsi}<br/>${position.timestamp}`);
+            }
+          });
+
+          status.textContent = `${data.length} positions loaded.`;
         } catch (error) {
-          output.textContent = 'Failed to load positions: ' + error.message;
+          status.textContent = 'Failed to load positions: ' + error.message;
         }
       }
 
