@@ -103,6 +103,8 @@ Primær persona: driftsleder/HMS-ansvarlig ved oppdrettsanlegg. Sekundært: havn
 - 2026-07-05: Anomali #1 = AIS-gap-deteksjon (regelbasert), ikke ML. ML utsatt til v2.
 - 2026-07-05: To-språks stack (TS ingest + Spring Boot API) valgt over ren TS for bredere CV-signal.
 - 2026-07-05: Arbeidsflyt = GitHub Flow: feature-branches + PR med squash merge til `main`; oppgaver og backlog som GitHub Issues (backlog flyttet fra README).
+- 2026-07-07: DB-schema leveres som initdb-SQL i dev (kjøres ved tomt volum); ordentlig migrasjonsverktøy (Flyway) innføres sammen med Spring Boot-API-et i uke 3–4.
+- 2026-07-07: `ais_positions` bruker naturlig nøkkel (mmsi, msgtime) uten surrogat-id; PK-en fungerer samtidig som dedup ved reconnect-replays (`ON CONFLICT DO NOTHING`).
 
 ## 10. Åpne spørsmål
 
