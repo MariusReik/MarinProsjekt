@@ -50,14 +50,6 @@ Primær persona: driftsleder/HMS-ansvarlig ved oppdrettsanlegg. Sekundært: havn
 - Mobilapp og native varsler
 - Avansert dashboard-personalisering og flere brukerroller
 
-### Backlog for neste iterasjoner
-
-- Robust ingest- og reconnect-flyt for eksterne datakilder
-- Observability med metrikk, tracing og alerting
-- Mer sofistikert lagringsmodell for tidsserier og geospatiale spørringer
-- REST/WebSocket-API for historikk, live-data og lokaliteter
-- Web-dashboard med kart, filtre og enkel hendelsesoversikt
-
 ## 5. Arkitektur
 
 ```

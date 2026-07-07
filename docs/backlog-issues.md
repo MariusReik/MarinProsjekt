@@ -1,9 +1,9 @@
 # Backlog and issue proposals
 
-The following workstreams are written in a professional issue-style format so they can be copied into GitHub Issues when needed.
+The following workstreams are written in a professional issue-style format and reflect the current implementation state of the project.
 
-## Epic 1: Ingest hardening and observability
-**Goal:** Make the ingest pipeline production-ready and resilient to external API failures.
+## Issue 1: Ingest hardening and observability
+**Goal:** Make the ingest pipeline resilient to transient errors and easier to operate in development and production.
 
 ### Scope
 - Add retry and backoff logic for Barentswatch requests.
@@ -16,7 +16,7 @@ The following workstreams are written in a professional issue-style format so th
 - Logs clearly show ingestion status and failure causes.
 - The service can recover after transient outages.
 
-## Epic 2: Persistent storage and data modeling
+## Issue 2: Persistent storage and data modeling
 **Goal:** Move from local persistence to a durable database-backed storage layer.
 
 ### Scope
@@ -26,11 +26,11 @@ The following workstreams are written in a professional issue-style format so th
 - Prepare for future TimescaleDB and PostGIS extensions.
 
 ### Acceptance criteria
-- AIS positions are persisted to PostgreSQL by default.
+- AIS positions are persisted to PostgreSQL by default when a database connection is configured.
 - The service can read back the latest stored batch through the API.
 - The storage layer is abstracted so alternative backends can be swapped in.
 
-## Epic 3: API and dashboard experience
+## Issue 3: API and dashboard experience
 **Goal:** Expose ingested data in a usable way for the web experience.
 
 ### Scope
@@ -41,5 +41,18 @@ The following workstreams are written in a professional issue-style format so th
 
 ### Acceptance criteria
 - The web demo can load and display positions from the ingest API.
-- The API returns structured, documented JSON payloads.
+- The API returns structured JSON payloads.
 - The UI can refresh data without a full page reload.
+
+## Issue 4: Anomaly detection and alerting
+**Goal:** Add the first meaningful value layer on top of AIS data.
+
+### Scope
+- Implement AIS-gap detection for vessels disappearing from the feed.
+- Trigger alerts through webhook or email.
+- Define a simple anomaly event model for future expansion.
+
+### Acceptance criteria
+- The system can detect when AIS signals stop for a vessel in a monitored area.
+- Alerts are emitted in a structured format.
+- The event model supports future rule-based expansion.
