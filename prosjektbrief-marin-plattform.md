@@ -105,6 +105,7 @@ Primær persona: driftsleder/HMS-ansvarlig ved oppdrettsanlegg. Sekundært: havn
 - 2026-07-05: Arbeidsflyt = GitHub Flow: feature-branches + PR med squash merge til `main`; oppgaver og backlog som GitHub Issues (backlog flyttet fra README).
 - 2026-07-07: DB-schema leveres som initdb-SQL i dev (kjøres ved tomt volum); ordentlig migrasjonsverktøy (Flyway) innføres sammen med Spring Boot-API-et i uke 3–4.
 - 2026-07-07: `ais_positions` bruker naturlig nøkkel (mmsi, msgtime) uten surrogat-id; PK-en fungerer samtidig som dedup ved reconnect-replays (`ON CONFLICT DO NOTHING`).
+- 2026-07-07: Retention: rådata 30 dager; continuous aggregate med 5-minutters bøtter per fartøy beholdes 365 dager.
 
 ## 10. Åpne spørsmål
 
