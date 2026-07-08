@@ -1,0 +1,68 @@
+name: CI
+
+# Minimal build+test gate on every PR (see decision log, 2026-07-08).
+# No deploy here — full CI/CD lands with week 7 per the project brief.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    name: API (Maven)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_DB: marin
+          POSTGRES_USER: marin
+          POSTGRES_PASSWORD: marin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U marin -d marin"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+
+      # Service containers on hosted runners don't support mounting
+      # infra/initdb like docker-compose does, so apply the same scripts
+      # by hand. Keeps infra/initdb as the single source of schema truth.
+      - name: Apply dev schema (mirrors infra/initdb)
+        run: |
+          for f in ../infra/initdb/*.sql; do
+            echo "Applying $f"
+            PGPASSWORD=marin psql -h localhost -U marin -d marin -f "$f"
+          done
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - run: mvn -B compile
+      - run: mvn -B test
+
+  ingest:
+    name: Ingest (Node)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ingest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ingest/package-lock.json
+      - run: npm ci
+      - run: npm test

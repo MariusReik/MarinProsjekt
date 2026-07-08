@@ -19,5 +19,16 @@ services:
       timeout: 3s
       retries: 10
 
+  api:
+    build: ../api
+    container_name: marin-api
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - '8080:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:

@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/marin
+    username: marin
+    password: marin
+  flyway:
+    # infra/initdb already bootstraps the schema in dev (see decision log
+    # 2026-07-08). Flyway only baselines that state and owns V2+ from here.
+    baseline-on-migrate: true
+    baseline-version: 1
+    baseline-description: "Schema bootstrapped by infra/initdb"
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    no.marinplattform: INFO

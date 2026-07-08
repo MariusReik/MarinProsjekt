@@ -1,0 +1,5 @@
+# Active when the api container runs inside infra/docker-compose.yml —
+# overrides the datasource host to the compose service name.
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/marin
