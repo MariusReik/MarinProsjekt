@@ -27,6 +27,9 @@ test('AISClient fetchLatestPositions uses the token and filters invalid position
         clientId: 'test-client',
         clientSecret: 'test-secret',
         tokenUrl: 'https://example.test/token',
+        streamUrl: 'https://example.test/stream',
+        databaseUrl: 'postgres://test',
+        boundingBox: { minLat: 59.0, maxLat: 62.5, minLon: 3.5, maxLon: 8.0 },
       },
     });
 
