@@ -106,9 +106,10 @@ Primær persona: driftsleder/HMS-ansvarlig ved oppdrettsanlegg. Sekundært: havn
 - 2026-07-07: DB-schema leveres som initdb-SQL i dev (kjøres ved tomt volum); ordentlig migrasjonsverktøy (Flyway) innføres sammen med Spring Boot-API-et i uke 3–4.
 - 2026-07-07: `ais_positions` bruker naturlig nøkkel (mmsi, msgtime) uten surrogat-id; PK-en fungerer samtidig som dedup ved reconnect-replays (`ON CONFLICT DO NOTHING`).
 - 2026-07-07: Retention: rådata 30 dager; continuous aggregate med 5-minutters bøtter per fartøy beholdes 365 dager.
+- 2026-07-07: Ingest bruker live-strømmen (per brief), ikke polling; eksisterende poll-løkke beholdes som dokumentert fallback. Begrunnelse: gap-deteksjon krever kontinuerlige observasjoner.
+- 2026-07-07: Geografisk boks for v1: 59,0–62,5°N, 3,5–8,0°Ø (Vestland fylke + margin). ~1200 fartøy i boksen ved test 2026-07-06.
 
 ## 10. Åpne spørsmål
 
 - Prosjektnavn (kandidater vurderes: noe norsk/maritimt, kort, ledig domene og GitHub-navn)
 - Hetzner vs AWS for deploy
-- Nøyaktig geografisk boks for v1 (forslag: Vestland fylke ± margin)
