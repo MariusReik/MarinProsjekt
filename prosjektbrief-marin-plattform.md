@@ -108,6 +108,8 @@ Primær persona: driftsleder/HMS-ansvarlig ved oppdrettsanlegg. Sekundært: havn
 - 2026-07-07: Retention: rådata 30 dager; continuous aggregate med 5-minutters bøtter per fartøy beholdes 365 dager.
 - 2026-07-07: Ingest bruker live-strømmen (per brief), ikke polling; eksisterende poll-løkke beholdes som dokumentert fallback. Begrunnelse: gap-deteksjon krever kontinuerlige observasjoner.
 - 2026-07-07: Geografisk boks for v1: 59,0–62,5°N, 3,5–8,0°Ø (Vestland fylke + margin). ~1200 fartøy i boksen ved test 2026-07-06.
+- 2026-07-08: Spring Boot-skeleton (issue #6): Maven (ikke Gradle) — Marius er mer vant med Maven. Spring Boot 3.5.16 (siste patch i 3.x-linja, ikke 4.1 som er «current stable») og Java 21 LTS, valgt for kjent/velprøvd oppsett fremfor nyeste major-versjon. GroupId `no.marinplattform` er placeholder til prosjektnavn er avgjort (§10).
+- 2026-07-08: Flyway innføres i api/ som avtalt i uke 3–4-planen, men eier kun migrasjoner *fremover* (V2+). `infra/initdb/*.sql` rører vi ikke — det er fortsatt det som bootstraper et tomt dev-volum, uavhengig av om API-et kjører. Begrunnelse: `baselineOnMigrate` kjører aldri SQL-en i baseline-migrasjonen (V1), den bare stempler historikken — å fjerne skjemaet fra initdb ville brutt ingest sin frittstående dev-flyt (`docker compose up` + `npm run dev` uten at API-et noensinne har kjørt).
 
 ## 10. Åpne spørsmål
 
