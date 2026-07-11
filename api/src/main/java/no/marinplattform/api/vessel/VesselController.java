@@ -12,9 +12,9 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Historical/lookup queries only (issue #7). Live updates arrive over
- * WebSocket in #8; POI/radius queries land in week 5 alongside aquaculture
- * sites.
+ * Historical/lookup queries only. Live updates go out over WebSocket
+ * instead (see {@code websocket.PositionBroadcastService}, issue #8);
+ * POI/radius queries land in week 5 alongside aquaculture sites.
  */
 @RestController
 @RequestMapping("/api")
