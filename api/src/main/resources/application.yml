@@ -12,6 +12,13 @@ spring:
     baseline-version: 1
     baseline-description: "Schema bootstrapped by infra/initdb"
 
+app:
+  websocket:
+    # How often PositionBroadcastService (#8) polls ais_positions for rows
+    # newer than the last broadcast. Small window keeps the query cheap —
+    # it only touches the newest hypertable chunk(s).
+    broadcast-interval-ms: 2000
+
 server:
   port: 8080
 

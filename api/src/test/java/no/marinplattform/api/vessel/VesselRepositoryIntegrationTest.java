@@ -70,4 +70,28 @@ class VesselRepositoryIntegrationTest {
         List<PositionDto> latest = repository.findLatestPositions(Duration.ofMinutes(5));
         assertTrue(latest.stream().anyMatch(p -> p.mmsi() == TEST_MMSI));
     }
+
+    @Test
+    void findPositionsSinceReturnsOnlyRowsAfterWatermark() {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        Instant before = now.minus(Duration.ofMinutes(1));
+
+        jdbcTemplate.update(
+            "INSERT INTO vessels (mmsi, name, ship_type, last_seen) VALUES (?, ?, ?, ?)",
+            TEST_MMSI, "Test Vessel", (short) 70, Timestamp.from(now)
+        );
+        jdbcTemplate.update(
+            "INSERT INTO ais_positions (mmsi, msgtime, latitude, longitude, sog, cog) VALUES (?, ?, ?, ?, ?, ?)",
+            TEST_MMSI, Timestamp.from(before), 60.10, 5.10, 5f, 45f
+        );
+        jdbcTemplate.update(
+            "INSERT INTO ais_positions (mmsi, msgtime, latitude, longitude, sog, cog) VALUES (?, ?, ?, ?, ?, ?)",
+            TEST_MMSI, Timestamp.from(now), 60.39, 5.32, 8.5f, 90f
+        );
+
+        List<PositionDto> sincePositions = repository.findPositionsSince(before.plusSeconds(1));
+
+        assertEquals(1, sincePositions.size());
+        assertEquals(now, sincePositions.get(0).msgtime());
+    }
 }

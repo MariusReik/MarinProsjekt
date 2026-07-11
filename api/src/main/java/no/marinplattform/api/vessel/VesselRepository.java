@@ -20,6 +20,10 @@ import java.util.List;
 @Repository
 public class VesselRepository {
 
+    // Safety cap on findPositionsSince: bounds how much backlog a single
+    // poll can pull if the broadcaster (#8) was stalled for a while.
+    private static final int MAX_SINCE_BATCH = 5_000;
+
     private static final RowMapper<VesselDto> VESSEL_MAPPER = VesselRepository::mapVessel;
     private static final RowMapper<PositionDto> POSITION_MAPPER = VesselRepository::mapPosition;
 
@@ -65,6 +69,28 @@ public class VesselRepository {
             """,
             POSITION_MAPPER,
             Timestamp.from(Instant.now().minus(lookback))
+        );
+    }
+
+    /**
+     * Rows strictly newer than {@code since}, oldest-first, so a caller can
+     * track its watermark from the last element. Backs the WebSocket
+     * position broadcaster (#8), which polls this on a short interval
+     * instead of the API subscribing to ingest directly — keeps ingest and
+     * API decoupled, sharing only the database, per the brief's
+     * architecture. Bounded by {@link #MAX_SINCE_BATCH}.
+     */
+    public List<PositionDto> findPositionsSince(Instant since) {
+        return jdbcTemplate.query(
+            """
+            SELECT mmsi, msgtime, latitude, longitude, sog, cog
+            FROM ais_positions
+            WHERE msgtime > ?
+            ORDER BY msgtime ASC
+            LIMIT ?
+            """,
+            POSITION_MAPPER,
+            Timestamp.from(since), MAX_SINCE_BATCH
         );
     }
 

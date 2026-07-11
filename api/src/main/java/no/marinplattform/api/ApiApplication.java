@@ -2,15 +2,17 @@ package no.marinplattform.api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Entry point for the marine platform API.
  *
- * This is intentionally a bare skeleton (issue #6): boots the app, connects
- * to Postgres, and applies Flyway migrations. REST endpoints land in #7,
- * the WebSocket position feed in #8.
+ * Boots the app, connects to Postgres, and applies Flyway migrations. REST
+ * endpoints landed in #7. @EnableScheduling drives the WebSocket position
+ * broadcaster from #8 (no separate scheduling config needed for one task).
  */
 @SpringBootApplication
+@EnableScheduling
 public class ApiApplication {
 
     public static void main(String[] args) {
