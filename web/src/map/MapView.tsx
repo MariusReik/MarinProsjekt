@@ -9,6 +9,38 @@ const VESSEL_SOURCE = "vessels";
 const VESSEL_LAYER = "vessels-circle";
 const TRACK_SOURCE = "track";
 const TRACK_LAYER = "track-line";
+const TRACK_ARROW_LAYER = "track-arrows";
+const ARROW_IMAGE = "track-arrow";
+
+/**
+ * Build a small upward-pointing arrowhead as raster RGBA pixels for map.addImage.
+ * On a line symbol layer, MapLibre rotates the icon so its "up" edge follows the
+ * line's coordinate order — the track is drawn oldest→newest, so the arrows end
+ * up pointing in the vessel's direction of travel. Drawn on a canvas (no sprite
+ * or glyph assets, keeping the API-key-free style, brief §6).
+ */
+function makeArrowIcon(): { width: number; height: number; data: Uint8ClampedArray } {
+  const size = 24;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    // Fully transparent fallback; the line itself still conveys the path.
+    return { width: size, height: size, data: new Uint8ClampedArray(size * size * 4) };
+  }
+  ctx.beginPath();
+  ctx.moveTo(size / 2, 4); // apex (up)
+  ctx.lineTo(size - 5, size - 6); // bottom-right
+  ctx.lineTo(5, size - 6); // bottom-left
+  ctx.closePath();
+  ctx.fillStyle = "#fbbf24";
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#0b1622";
+  ctx.stroke();
+  return { width: size, height: size, data: ctx.getImageData(0, 0, size, size).data };
+}
 
 interface MapViewProps {
   store: React.MutableRefObject<Map<number, Position>>;
@@ -58,6 +90,25 @@ export function MapView({ store, selectedMmsi, track, onSelectVessel }: MapViewP
         source: TRACK_SOURCE,
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": "#fbbf24", "line-width": 3, "line-opacity": 0.85 },
+      });
+
+      // Direction-of-travel arrowheads spaced along the track line.
+      if (!map.hasImage(ARROW_IMAGE)) {
+        map.addImage(ARROW_IMAGE, makeArrowIcon(), { pixelRatio: 2 });
+      }
+      map.addLayer({
+        id: TRACK_ARROW_LAYER,
+        type: "symbol",
+        source: TRACK_SOURCE,
+        layout: {
+          "symbol-placement": "line",
+          "symbol-spacing": 90,
+          "icon-image": ARROW_IMAGE,
+          "icon-size": 0.7,
+          "icon-rotation-alignment": "map",
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+        },
       });
 
       map.addSource(VESSEL_SOURCE, { type: "geojson", data: EMPTY_FC });

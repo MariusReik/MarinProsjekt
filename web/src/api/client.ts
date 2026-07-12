@@ -1,5 +1,5 @@
 import type { Position, Vessel } from "./types";
-import { LATEST_SNAPSHOT_MINUTES, TRACK_LOOKBACK_HOURS } from "../config";
+import { LATEST_SNAPSHOT_MINUTES } from "../config";
 
 /**
  * Thin REST client for the Spring Boot API. All requests go to same-origin
@@ -34,12 +34,16 @@ export function fetchVessels(signal?: AbortSignal): Promise<Vessel[]> {
 }
 
 /**
- * Historical track for a single vessel over the last {@link TRACK_LOOKBACK_HOURS}.
+ * Historical track for a single vessel over the last {@code lookbackHours}.
  * The API returns rows newest-first; callers that draw a line should reverse.
  */
-export function fetchTrack(mmsi: number, signal?: AbortSignal): Promise<Position[]> {
+export function fetchTrack(
+  mmsi: number,
+  lookbackHours: number,
+  signal?: AbortSignal
+): Promise<Position[]> {
   const to = new Date();
-  const from = new Date(to.getTime() - TRACK_LOOKBACK_HOURS * 60 * 60 * 1000);
+  const from = new Date(to.getTime() - lookbackHours * 60 * 60 * 1000);
   const params = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
   return getJson<Position[]>(`/api/vessels/${mmsi}/track?${params.toString()}`, signal);
 }

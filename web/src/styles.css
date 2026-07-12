@@ -149,6 +149,40 @@ body,
   color: #04201d;
 }
 
+.panel .track-filter {
+  margin-top: 14px;
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: rgba(11, 22, 34, 0.6);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+}
+
+.panel .track-filter button {
+  flex: 1 1 0;
+  padding: 6px 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel .track-filter button:hover {
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--text);
+}
+
+.panel .track-filter button.active {
+  background: var(--accent-dim);
+  color: var(--text);
+}
+
+.panel .track-filter button.active:hover {
+  background: var(--accent);
+  color: #04201d;
+}
+
 .panel .track-note {
   margin-top: 10px;
   font-size: 12px;

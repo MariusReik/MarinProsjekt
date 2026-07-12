@@ -33,5 +33,26 @@ export const VESSEL_STALE_AFTER_MS = 15 * 60 * 1000;
 /** Default lookback for the initial REST snapshot (matches API default). */
 export const LATEST_SNAPSHOT_MINUTES = 15;
 
-/** How far back to fetch a vessel's historical track when clicked. */
-export const TRACK_LOOKBACK_HOURS = 24;
+/** A selectable look-back window for a vessel's historical track. */
+export interface TrackWindow {
+  /** Short label for the segmented time filter (issue #10). */
+  label: string;
+  /** How far back from "now" the track query should reach. */
+  hours: number;
+}
+
+/**
+ * Time-filter presets offered when a vessel is selected (issue #10). The API
+ * caps a track at MAX_TRACK_LIMIT rows, so a 7 d window may be truncated for
+ * busy vessels — the panel surfaces the returned point count either way.
+ */
+export const TRACK_WINDOWS: readonly TrackWindow[] = [
+  { label: "1 t", hours: 1 },
+  { label: "6 t", hours: 6 },
+  { label: "24 t", hours: 24 },
+  { label: "7 d", hours: 24 * 7 },
+];
+
+/** Default look-back window used when a vessel is first selected. */
+export const DEFAULT_TRACK_WINDOW: TrackWindow =
+  TRACK_WINDOWS.find((w) => w.hours === 24) ?? TRACK_WINDOWS[0];
