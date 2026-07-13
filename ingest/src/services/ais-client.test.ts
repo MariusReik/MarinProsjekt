@@ -30,6 +30,9 @@ test('AISClient fetchLatestPositions uses the token and filters invalid position
         streamUrl: 'https://example.test/stream',
         databaseUrl: 'postgres://test',
         boundingBox: { minLat: 59.0, maxLat: 62.5, minLon: 3.5, maxLon: 8.0 },
+        localitiesUrl: 'https://example.test/localities',
+        localitiesScope: 'api',
+        localitiesRefreshMs: 86_400_000,
       },
     });
 
