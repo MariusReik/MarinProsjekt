@@ -24,3 +24,24 @@ export interface Vessel {
   shipType: number | null;
   lastSeen: string; // ISO-8601 UTC
 }
+
+/**
+ * - Locality      -> no.marinplattform.api.locality.LocalityDto      (issue #12)
+ * - NearbyVessel  -> no.marinplattform.api.locality.NearbyVesselDto  (issue #12)
+ */
+export interface Locality {
+  localityNo: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface NearbyVessel {
+  mmsi: number;
+  name: string | null;
+  shipType: number | null;
+  positionCount: number;
+  firstSeen: string; // ISO-8601 UTC
+  lastSeen: string; // ISO-8601 UTC
+  minDistanceMeters: number;
+}

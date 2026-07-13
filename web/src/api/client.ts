@@ -1,4 +1,4 @@
-import type { Position, Vessel } from "./types";
+import type { Locality, NearbyVessel, Position, Vessel } from "./types";
 import { LATEST_SNAPSHOT_MINUTES } from "../config";
 
 /**
@@ -46,4 +46,29 @@ export function fetchTrack(
   const from = new Date(to.getTime() - lookbackHours * 60 * 60 * 1000);
   const params = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
   return getJson<Position[]>(`/api/vessels/${mmsi}/track?${params.toString()}`, signal);
+}
+
+/** All aquaculture localities; rendered as a map layer and selectable POIs. */
+export function fetchLocalities(signal?: AbortSignal): Promise<Locality[]> {
+  return getJson<Locality[]>("/api/localities", signal);
+}
+
+/**
+ * Vessels active within {@code radiusMeters} of a locality over the last
+ * {@code hours} — the PostGIS ST_DWithin activity query (issue #12).
+ */
+export function fetchNearbyVessels(
+  localityNo: number,
+  radiusMeters: number,
+  hours: number,
+  signal?: AbortSignal
+): Promise<NearbyVessel[]> {
+  const params = new URLSearchParams({
+    radiusMeters: String(radiusMeters),
+    hours: String(hours),
+  });
+  return getJson<NearbyVessel[]>(
+    `/api/localities/${localityNo}/vessels?${params.toString()}`,
+    signal
+  );
 }

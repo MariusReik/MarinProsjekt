@@ -56,3 +56,19 @@ export const TRACK_WINDOWS: readonly TrackWindow[] = [
 /** Default look-back window used when a vessel is first selected. */
 export const DEFAULT_TRACK_WINDOW: TrackWindow =
   TRACK_WINDOWS.find((w) => w.hours === 24) ?? TRACK_WINDOWS[0];
+
+/**
+ * Radius options for the locality activity query (issue #12). Brief default is
+ * 1 km; the API clamps to [50 m, 50 km].
+ */
+export const RADIUS_OPTIONS: readonly number[] = [500, 1000, 2000, 5000];
+
+/** Default search radius in meters (brief user story #1). */
+export const DEFAULT_RADIUS_METERS = 1000;
+
+/**
+ * Look-back window for locality activity. Brief user story #1 is "last 7 days";
+ * reuse the TRACK_WINDOWS presets and default to 7 d here.
+ */
+export const DEFAULT_NEARBY_WINDOW: TrackWindow =
+  TRACK_WINDOWS.find((w) => w.hours === 24 * 7) ?? TRACK_WINDOWS[TRACK_WINDOWS.length - 1];

@@ -1,9 +1,15 @@
 import { useEffect, useRef } from "react";
 import maplibregl, { type GeoJSONSource, type MapLayerMouseEvent } from "maplibre-gl";
-import type { Position } from "../api/types";
+import type { Locality, Position } from "../api/types";
 import { MAP_CENTER, MAP_INITIAL_ZOOM, MAP_REFRESH_INTERVAL_MS } from "../config";
 import { OSM_RASTER_STYLE } from "./mapStyle";
-import { EMPTY_FC, trackToGeoJson, vesselsToGeoJson } from "./geojson";
+import {
+  EMPTY_FC,
+  localitiesToGeoJson,
+  radiusCircleToGeoJson,
+  trackToGeoJson,
+  vesselsToGeoJson,
+} from "./geojson";
 
 const VESSEL_SOURCE = "vessels";
 const VESSEL_LAYER = "vessels-circle";
@@ -11,6 +17,11 @@ const TRACK_SOURCE = "track";
 const TRACK_LAYER = "track-line";
 const TRACK_ARROW_LAYER = "track-arrows";
 const ARROW_IMAGE = "track-arrow";
+const LOCALITY_SOURCE = "localities";
+const LOCALITY_LAYER = "localities-circle";
+const RADIUS_SOURCE = "radius";
+const RADIUS_FILL_LAYER = "radius-fill";
+const RADIUS_LINE_LAYER = "radius-line";
 
 /**
  * Build a small upward-pointing arrowhead as raster RGBA pixels for map.addImage.
@@ -47,6 +58,10 @@ interface MapViewProps {
   selectedMmsi: number | null;
   track: Position[] | null;
   onSelectVessel: (position: Position | null) => void;
+  localities: Locality[];
+  selectedLocalityNo: number | null;
+  radiusMeters: number;
+  onSelectLocality: (localityNo: number | null) => void;
 }
 
 /**
@@ -54,19 +69,43 @@ interface MapViewProps {
  * layer, plus the selected vessel's historical track as a line. Vessel updates
  * are applied imperatively on a throttled interval (reading the position store
  * ref) rather than through React state, so a busy WebSocket feed never causes a
- * React re-render per frame.
+ * React re-render per frame. Aquaculture localities (issue #12) are drawn as a
+ * second POI layer; selecting one draws its search radius and drives the
+ * "vessels within radius" query in the parent.
  */
-export function MapView({ store, selectedMmsi, track, onSelectVessel }: MapViewProps) {
+export function MapView({
+  store,
+  selectedMmsi,
+  track,
+  onSelectVessel,
+  localities,
+  selectedLocalityNo,
+  radiusMeters,
+  onSelectLocality,
+}: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const readyRef = useRef(false);
   const selectedRef = useRef<number | null>(selectedMmsi);
 
-  // Keep the latest callback/selection in refs so the map's event handlers and
+  // Keep the latest callbacks/selection in refs so the map's event handlers and
   // redraw interval (registered once) always see current values.
   const onSelectRef = useRef(onSelectVessel);
+  const onSelectLocalityRef = useRef(onSelectLocality);
   onSelectRef.current = onSelectVessel;
+  onSelectLocalityRef.current = onSelectLocality;
   selectedRef.current = selectedMmsi;
+
+  // Latest locality props mirrored into refs the once-registered draw closures
+  // read, plus refs holding those closures so the update effects can invoke them.
+  const localitiesRef = useRef(localities);
+  const selectedLocalityRef = useRef(selectedLocalityNo);
+  const radiusRef = useRef(radiusMeters);
+  const drawLocalitiesRef = useRef<() => void>(() => {});
+  const drawRadiusRef = useRef<() => void>(() => {});
+  localitiesRef.current = localities;
+  selectedLocalityRef.current = selectedLocalityNo;
+  radiusRef.current = radiusMeters;
 
   // --- Map init (once) --------------------------------------------------
   useEffect(() => {
@@ -111,6 +150,26 @@ export function MapView({ store, selectedMmsi, track, onSelectVessel }: MapViewP
         },
       });
 
+      // Search-radius overlay for the selected locality (kept beneath vessels).
+      map.addSource(RADIUS_SOURCE, { type: "geojson", data: EMPTY_FC });
+      map.addLayer({
+        id: RADIUS_FILL_LAYER,
+        type: "fill",
+        source: RADIUS_SOURCE,
+        paint: { "fill-color": "#a855f7", "fill-opacity": 0.1 },
+      });
+      map.addLayer({
+        id: RADIUS_LINE_LAYER,
+        type: "line",
+        source: RADIUS_SOURCE,
+        paint: {
+          "line-color": "#a855f7",
+          "line-width": 1.5,
+          "line-opacity": 0.8,
+          "line-dasharray": [2, 2],
+        },
+      });
+
       map.addSource(VESSEL_SOURCE, { type: "geojson", data: EMPTY_FC });
       map.addLayer({
         id: VESSEL_LAYER,
@@ -125,8 +184,26 @@ export function MapView({ store, selectedMmsi, track, onSelectVessel }: MapViewP
         },
       });
 
+      // Aquaculture localities as POIs, drawn on top so they stay clickable.
+      map.addSource(LOCALITY_SOURCE, { type: "geojson", data: EMPTY_FC });
+      map.addLayer({
+        id: LOCALITY_LAYER,
+        type: "circle",
+        source: LOCALITY_SOURCE,
+        paint: {
+          "circle-radius": ["case", ["get", "selected"], 9, 6],
+          "circle-color": "#a855f7",
+          "circle-stroke-width": ["case", ["get", "selected"], 3, 1.5],
+          "circle-stroke-color": ["case", ["get", "selected"], "#fbbf24", "#e6edf3"],
+          "circle-opacity": 0.95,
+        },
+      });
+
       readyRef.current = true;
       redraw(); // paint the initial snapshot immediately
+      // Paint any localities/radius already provided before load finished.
+      drawLocalities();
+      drawRadius();
     });
 
     const handleVesselClick = (e: MapLayerMouseEvent) => {
@@ -138,21 +215,34 @@ export function MapView({ store, selectedMmsi, track, onSelectVessel }: MapViewP
       onSelectRef.current(pos);
     };
 
+    const handleLocalityClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      if (!feature) return;
+      onSelectLocalityRef.current(Number(feature.properties?.localityNo));
+    };
+
     const handleMapClick = (e: MapLayerMouseEvent) => {
-      const hits = map.queryRenderedFeatures(e.point, { layers: [VESSEL_LAYER] });
+      const hits = map.queryRenderedFeatures(e.point, {
+        layers: [VESSEL_LAYER, LOCALITY_LAYER],
+      });
       if (hits.length === 0) {
-        onSelectRef.current(null); // click on empty water clears selection
+        // Click on empty water clears both selections.
+        onSelectRef.current(null);
+        onSelectLocalityRef.current(null);
       }
     };
 
     map.on("click", VESSEL_LAYER, handleVesselClick);
+    map.on("click", LOCALITY_LAYER, handleLocalityClick);
     map.on("click", handleMapClick);
-    map.on("mouseenter", VESSEL_LAYER, () => {
-      map.getCanvas().style.cursor = "pointer";
-    });
-    map.on("mouseleave", VESSEL_LAYER, () => {
-      map.getCanvas().style.cursor = "";
-    });
+    for (const layer of [VESSEL_LAYER, LOCALITY_LAYER]) {
+      map.on("mouseenter", layer, () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", layer, () => {
+        map.getCanvas().style.cursor = "";
+      });
+    }
 
     // Redraw vessels on a fixed cadence, decoupled from message arrival.
     const timer = window.setInterval(redraw, MAP_REFRESH_INTERVAL_MS);
@@ -162,6 +252,29 @@ export function MapView({ store, selectedMmsi, track, onSelectVessel }: MapViewP
       const source = map.getSource(VESSEL_SOURCE) as GeoJSONSource | undefined;
       source?.setData(vesselsToGeoJson(store.current, selectedRef.current));
     }
+
+    function drawLocalities() {
+      if (!readyRef.current) return;
+      const source = map.getSource(LOCALITY_SOURCE) as GeoJSONSource | undefined;
+      source?.setData(localitiesToGeoJson(localitiesRef.current, selectedLocalityRef.current));
+    }
+
+    function drawRadius() {
+      if (!readyRef.current) return;
+      const source = map.getSource(RADIUS_SOURCE) as GeoJSONSource | undefined;
+      if (!source) return;
+      const selected = localitiesRef.current.find(
+        (l) => l.localityNo === selectedLocalityRef.current,
+      );
+      source.setData(
+        selected
+          ? radiusCircleToGeoJson([selected.longitude, selected.latitude], radiusRef.current)
+          : EMPTY_FC,
+      );
+    }
+
+    drawLocalitiesRef.current = drawLocalities;
+    drawRadiusRef.current = drawRadius;
 
     return () => {
       window.clearInterval(timer);
@@ -180,6 +293,16 @@ export function MapView({ store, selectedMmsi, track, onSelectVessel }: MapViewP
     const source = map.getSource(TRACK_SOURCE) as GeoJSONSource | undefined;
     source?.setData(track ? trackToGeoJson(track) : EMPTY_FC);
   }, [track]);
+
+  // --- Locality layer updates -------------------------------------------
+  useEffect(() => {
+    drawLocalitiesRef.current();
+  }, [localities, selectedLocalityNo]);
+
+  // --- Radius overlay updates -------------------------------------------
+  useEffect(() => {
+    drawRadiusRef.current();
+  }, [localities, selectedLocalityNo, radiusMeters]);
 
   return <div ref={containerRef} className="map" />;
 }
