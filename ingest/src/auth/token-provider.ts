@@ -31,6 +31,9 @@ export class TokenProvider {
   constructor(
     private readonly config: Config,
     private readonly fetchFn: typeof fetch = fetch,
+    // OAuth scope for the token. AIS stream uses 'ais'; the Fiskehelse
+    // (bwapi) endpoints use 'api'. One provider instance per scope.
+    private readonly scope: string = 'ais',
   ) {}
 
   /** Returns a currently-valid access token, fetching/refreshing as needed. */
@@ -52,7 +55,7 @@ export class TokenProvider {
   private async fetchToken(): Promise<string> {
     const form = new URLSearchParams({
       grant_type: 'client_credentials',
-      scope: 'ais',
+      scope: this.scope,
       client_id: this.config.clientId,
       client_secret: this.config.clientSecret,
     });

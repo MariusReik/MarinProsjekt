@@ -16,6 +16,10 @@ export interface Config {
   streamUrl: string;
   databaseUrl: string;
   boundingBox: BoundingBox;
+  // Fiskehelse aquaculture localities (issue #11).
+  localitiesUrl: string;
+  localitiesScope: string;
+  localitiesRefreshMs: number;
 }
 
 const DEFAULT_TOKEN_URL = 'https://id.barentswatch.no/connect/token';
@@ -23,6 +27,12 @@ const DEFAULT_STREAM_URL =
   'https://live.ais.barentswatch.no/v1/combined?modelType=Full&modelFormat=Json';
 // Dev default matches infra/docker-compose.yml. Override in production.
 const DEFAULT_DATABASE_URL = 'postgres://marin:marin@localhost:5432/marin';
+// Fiskehelse (bwapi) localities list endpoint. Uses OAuth scope 'api', not 'ais'.
+const DEFAULT_LOCALITIES_URL =
+  'https://www.barentswatch.no/bwapi/v1/geodata/fishhealth/localities';
+const DEFAULT_LOCALITIES_SCOPE = 'api';
+// Localities change slowly; a daily refresh is plenty (issue #11).
+const DEFAULT_LOCALITIES_REFRESH_MS = 24 * 60 * 60 * 1000;
 
 // Decision log 2026-07-07: Vestland county + offshore margin.
 const DEFAULT_BBOX: BoundingBox = { minLat: 59.0, maxLat: 62.5, minLon: 3.5, maxLon: 8.0 };
@@ -49,6 +59,8 @@ export function loadConfig(): Config {
   const tokenUrl = process.env.BW_TOKEN_URL?.trim() || DEFAULT_TOKEN_URL;
   const streamUrl = process.env.AIS_STREAM_URL?.trim() || DEFAULT_STREAM_URL;
   const databaseUrl = process.env.DATABASE_URL?.trim() || DEFAULT_DATABASE_URL;
+  const localitiesUrl = process.env.LOCALITIES_URL?.trim() || DEFAULT_LOCALITIES_URL;
+  const localitiesScope = process.env.LOCALITIES_SCOPE?.trim() || DEFAULT_LOCALITIES_SCOPE;
 
   const missing = [
     ['BW_CLIENT_ID', clientId],
@@ -71,6 +83,11 @@ export function loadConfig(): Config {
     throw new Error('Invalid bounding box: min must be strictly less than max');
   }
 
+  const localitiesRefreshMs = numberFromEnv('LOCALITIES_REFRESH_MS', DEFAULT_LOCALITIES_REFRESH_MS);
+  if (localitiesRefreshMs <= 0) {
+    throw new Error('LOCALITIES_REFRESH_MS must be a positive number of milliseconds');
+  }
+
   return {
     clientId: clientId!,
     clientSecret: clientSecret!,
@@ -78,5 +95,8 @@ export function loadConfig(): Config {
     streamUrl,
     databaseUrl,
     boundingBox,
+    localitiesUrl,
+    localitiesScope,
+    localitiesRefreshMs,
   };
 }
