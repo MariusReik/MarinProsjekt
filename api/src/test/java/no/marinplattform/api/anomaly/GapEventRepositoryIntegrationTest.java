@@ -42,18 +42,26 @@ class GapEventRepositoryIntegrationTest {
     @Autowired
     private GapEventRepository repository;
 
+    // All test localities live in the 999_999_xxx range. We wipe the whole
+    // range (not just our own locality_no) so this test is isolated from
+    // fixtures other tests leave behind: LocalityRepositoryIntegrationTest (#12)
+    // cleans up in @BeforeEach only, so its locality sits at the SAME
+    // coordinates our dark vessel uses and would otherwise match too — the
+    // detection query scans every locality, so that doubles the gap count.
+    private static final int TEST_LOCALITY_FLOOR = 999_000_000;
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     void cleanUp() {
-        int[] mmsis = {DARK_MMSI, SAILED_MMSI, FRESH_MMSI};
-        for (int mmsi : mmsis) {
-            jdbcTemplate.update("DELETE FROM gap_events WHERE mmsi = ?", mmsi);
+        // gap_events first — it has an FK to localities.
+        jdbcTemplate.update("DELETE FROM gap_events WHERE locality_no >= ?", TEST_LOCALITY_FLOOR);
+        for (int mmsi : new int[]{DARK_MMSI, SAILED_MMSI, FRESH_MMSI}) {
             jdbcTemplate.update("DELETE FROM ais_positions WHERE mmsi = ?", mmsi);
             jdbcTemplate.update("DELETE FROM vessels WHERE mmsi = ?", mmsi);
         }
-        jdbcTemplate.update("DELETE FROM localities WHERE locality_no = ?", TEST_LOCALITY_NO);
+        jdbcTemplate.update("DELETE FROM localities WHERE locality_no >= ?", TEST_LOCALITY_FLOOR);
     }
 
     @Test
