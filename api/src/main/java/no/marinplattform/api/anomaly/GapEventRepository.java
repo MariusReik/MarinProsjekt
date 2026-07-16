@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -97,6 +99,46 @@ public class GapEventRepository {
             """,
             GAP_MAPPER,
             limit
+        );
+    }
+
+    /**
+     * Gaps that have not yet been alerted, oldest first (issue #15). Backed by
+     * the partial index {@code idx_gap_events_unalerted}. The alerting job sends
+     * each of these, then calls {@link #markAlerted}.
+     */
+    public List<GapEvent> findUnalerted(int limit) {
+        return jdbcTemplate.query(
+            """
+            SELECT mmsi, locality_no, last_seen_at, last_latitude, last_longitude,
+                   min_distance_m, detected_at
+            FROM gap_events
+            WHERE alerted_at IS NULL
+            ORDER BY detected_at
+            LIMIT ?
+            """,
+            GAP_MAPPER,
+            limit
+        );
+    }
+
+    /**
+     * Stamp a gap as alerted after a successful delivery (issue #15). The
+     * {@code alerted_at IS NULL} guard keeps this idempotent and safe against a
+     * concurrent cycle: only the first successful delivery wins, and the return
+     * value tells the caller whether this call was that one.
+     *
+     * @return 1 if the row was stamped, 0 if it was already alerted / gone
+     */
+    public int markAlerted(int mmsi, int localityNo, Instant lastSeenAt) {
+        return jdbcTemplate.update(
+            """
+            UPDATE gap_events
+            SET alerted_at = now()
+            WHERE mmsi = ? AND locality_no = ? AND last_seen_at = ?
+              AND alerted_at IS NULL
+            """,
+            mmsi, localityNo, Timestamp.from(lastSeenAt)
         );
     }
 
