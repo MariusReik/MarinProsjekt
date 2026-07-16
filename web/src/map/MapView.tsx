@@ -61,6 +61,7 @@ interface MapViewProps {
   localities: Locality[];
   selectedLocalityNo: number | null;
   radiusMeters: number;
+  localitiesVisible: boolean;
   onSelectLocality: (localityNo: number | null) => void;
 }
 
@@ -81,6 +82,7 @@ export function MapView({
   localities,
   selectedLocalityNo,
   radiusMeters,
+  localitiesVisible,
   onSelectLocality,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -101,11 +103,18 @@ export function MapView({
   const localitiesRef = useRef(localities);
   const selectedLocalityRef = useRef(selectedLocalityNo);
   const radiusRef = useRef(radiusMeters);
+  const localitiesVisibleRef = useRef(localitiesVisible);
   const drawLocalitiesRef = useRef<() => void>(() => {});
   const drawRadiusRef = useRef<() => void>(() => {});
+  const applyLocalityVisibilityRef = useRef<(visible: boolean) => void>(() => {});
   localitiesRef.current = localities;
   selectedLocalityRef.current = selectedLocalityNo;
   radiusRef.current = radiusMeters;
+  localitiesVisibleRef.current = localitiesVisible;
+
+  // The locality/radius layer ids toggled together as one logical "localities"
+  // layer (issue #13).
+  const LOCALITY_LAYER_IDS = [LOCALITY_LAYER, RADIUS_FILL_LAYER, RADIUS_LINE_LAYER];
 
   // --- Map init (once) --------------------------------------------------
   useEffect(() => {
@@ -199,12 +208,24 @@ export function MapView({
         },
       });
 
+      // Apply the current layer visibility before the first paint so the
+      // localities honour a toggle set while the style was still loading.
+      applyLocalityVisibility(localitiesVisibleRef.current);
+
       readyRef.current = true;
       redraw(); // paint the initial snapshot immediately
       // Paint any localities/radius already provided before load finished.
       drawLocalities();
       drawRadius();
     });
+
+    function applyLocalityVisibility(visible: boolean) {
+      const visibility = visible ? "visible" : "none";
+      for (const id of LOCALITY_LAYER_IDS) {
+        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visibility);
+      }
+    }
+    applyLocalityVisibilityRef.current = applyLocalityVisibility;
 
     const handleVesselClick = (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0];
@@ -303,6 +324,12 @@ export function MapView({
   useEffect(() => {
     drawRadiusRef.current();
   }, [localities, selectedLocalityNo, radiusMeters]);
+
+  // --- Locality layer visibility toggle (issue #13) ---------------------
+  useEffect(() => {
+    if (!readyRef.current) return;
+    applyLocalityVisibilityRef.current(localitiesVisible);
+  }, [localitiesVisible]);
 
   return <div ref={containerRef} className="map" />;
 }
