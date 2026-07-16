@@ -18,6 +18,12 @@ app:
     # newer than the last broadcast. Small window keeps the query cheap —
     # it only touches the newest hypertable chunk(s).
     broadcast-interval-ms: 2000
+  anomaly:
+    # AIS gap-detection background job (week 6). See GapDetectionService.
+    gap-check-interval-ms: 60000    # how often the rule runs
+    gap-threshold-minutes: 30       # silence before a disappearance is a gap
+    lookback-hours: 12              # only recently-active vessels are considered
+    radius-meters: 1000             # proximity to a locality that counts (brief §25)
 
 server:
   port: 8080
