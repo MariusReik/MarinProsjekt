@@ -22,6 +22,19 @@ public class ApiExceptionHandler {
         return badRequest(ex.getMessage(), request);
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+        log.warn("Not found on {}: {}", request.getRequestURI(), ex.getMessage());
+        ApiError body = new ApiError(
+            Instant.now(),
+            HttpStatus.NOT_FOUND.value(),
+            "Not Found",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
     // Covers bad path/query values Spring fails to convert, e.g. a
     // non-numeric {mmsi} path segment or an unparseable Instant param.
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
