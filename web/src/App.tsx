@@ -10,6 +10,7 @@ import {
 import { useLivePositions } from "./hooks/useLivePositions";
 import { MapView } from "./map/MapView";
 import { StatusBar } from "./components/StatusBar";
+import { LayerToggle } from "./components/LayerToggle";
 import { VesselPanel, type TrackState } from "./components/VesselPanel";
 import { LocalityPanel, type NearbyState } from "./components/LocalityPanel";
 
@@ -31,6 +32,8 @@ export function App() {
   const [radiusMeters, setRadiusMeters] = useState<number>(DEFAULT_RADIUS_METERS);
   const [nearbyWindow, setNearbyWindow] = useState<TrackWindow>(DEFAULT_NEARBY_WINDOW);
   const [nearbyState, setNearbyState] = useState<NearbyState>(NO_NEARBY);
+  // Locality layer visibility toggle (issue #13).
+  const [localitiesVisible, setLocalitiesVisible] = useState(true);
 
   // Lightweight 1 Hz tick so the vessel count and the selected-vessel panel
   // reflect live store updates (the store is a ref and doesn't re-render).
@@ -50,6 +53,13 @@ export function App() {
   const onSelectLocality = useCallback((localityNo: number | null) => {
     setSelectedLocalityNo(localityNo);
     setSelectedMmsi(null);
+  }, []);
+
+  // Toggle the locality layer (issue #13). Hiding it also clears any locality
+  // selection so the radius overlay and activity panel disappear with the layer.
+  const onToggleLocalities = useCallback((visible: boolean) => {
+    setLocalitiesVisible(visible);
+    if (!visible) setSelectedLocalityNo(null);
   }, []);
 
   // Click a row in the locality's activity list: draw that vessel's track but
@@ -126,10 +136,17 @@ export function App() {
         localities={localities}
         selectedLocalityNo={selectedLocalityNo}
         radiusMeters={radiusMeters}
+        localitiesVisible={localitiesVisible}
         onSelectLocality={onSelectLocality}
       />
 
       <StatusBar status={status} vesselCount={store.current.size} />
+
+      <LayerToggle
+        localitiesVisible={localitiesVisible}
+        localityCount={localities.length}
+        onToggleLocalities={onToggleLocalities}
+      />
 
       {selectedLocality ? (
         <LocalityPanel
