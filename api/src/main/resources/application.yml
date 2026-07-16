@@ -24,6 +24,11 @@ app:
     gap-threshold-minutes: 30       # silence before a disappearance is a gap
     lookback-hours: 12              # only recently-active vessels are considered
     radius-meters: 1000             # proximity to a locality that counts (brief §25)
+  alerting:
+    # Gap alerting job (week 6, issue #15). See GapAlertService.
+    check-interval-ms: 60000        # how often unalerted gaps are delivered
+    webhook-url: ""                 # POST target; empty = alerting disabled
+    batch-limit: 50                 # max gaps delivered per cycle
 
 server:
   port: 8080
