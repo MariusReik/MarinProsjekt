@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/stream-main.ts",
-    "dev:poll": "tsx src/index.ts",
     "dev:localities": "tsx src/localities-main.ts",
     "build": "tsc -p tsconfig.json",
     "test": "tsx --test src/**/*.test.ts",
