@@ -1,7 +1,8 @@
 name: CI
 
-# Minimal build+test gate on every PR (see decision log, 2026-07-08).
-# No deploy here — full CI/CD lands with week 7 per the project brief.
+# Lint + test + build gate on every PR and push to main (issue #16). No deploy
+# here — full CI/CD lands with the week 7 deploy work per the project brief.
+# Three independent jobs so a failure points straight at the culprit module.
 on:
   pull_request:
     branches: [main]
@@ -65,4 +66,22 @@ jobs:
           cache: npm
           cache-dependency-path: ingest/package-lock.json
       - run: npm ci
+      - run: npm run lint
       - run: npm test
+
+  web:
+    name: Web (React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
