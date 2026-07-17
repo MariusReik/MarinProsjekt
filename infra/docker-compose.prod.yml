@@ -1,0 +1,75 @@
+# Production stack. Run from this directory on the server:
+#   docker compose -f docker-compose.prod.yml up -d
+# Reads secrets from ./.env (see .env.prod.example).
+
+services:
+  postgres:
+    image: timescale/timescaledb-ha:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: marin
+      POSTGRES_USER: marin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/home/postgres/pgdata/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U marin -d marin']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ingest:
+    image: ghcr.io/mariusreik/marinprosjekt-ingest:latest
+    restart: unless-stopped
+    environment:
+      BW_CLIENT_ID: ${BW_CLIENT_ID}
+      BW_CLIENT_SECRET: ${BW_CLIENT_SECRET}
+      DATABASE_URL: postgres://marin:${POSTGRES_PASSWORD}@postgres:5432/marin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  localities:
+    image: ghcr.io/mariusreik/marinprosjekt-ingest:latest
+    restart: unless-stopped
+    command: ['node', 'dist/localities-main.js']
+    environment:
+      BW_CLIENT_ID: ${BW_CLIENT_ID}
+      BW_CLIENT_SECRET: ${BW_CLIENT_SECRET}
+      DATABASE_URL: postgres://marin:${POSTGRES_PASSWORD}@postgres:5432/marin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: ghcr.io/mariusreik/marinprosjekt-api:latest
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/marin
+      SPRING_DATASOURCE_USERNAME: marin
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      # Optional gap-alert webhook (empty = alerting disabled)
+      APP_ALERTING_WEBHOOKURL: ${GAP_WEBHOOK_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: ghcr.io/mariusreik/marinprosjekt-web:latest
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

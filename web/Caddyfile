@@ -1,0 +1,19 @@
+# DOMAIN comes from the environment (docker-compose.prod.yml).
+# Caddy obtains and renews Let's Encrypt certificates automatically.
+{$DOMAIN} {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle /ws* {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
