@@ -26,6 +26,9 @@ build/
 .DS_Store
 Thumbs.db
 
+# Local AI-assistant instructions (kept out of the public repo)
+CLAUDE.md
+
 # Data dumps (week 1 raw AIS dumps etc.)
 data/
 *.ndjson
