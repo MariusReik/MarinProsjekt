@@ -27,13 +27,22 @@ automatic anomaly flagging for site operators.
 
 ```mermaid
 flowchart TB
-    BW[Barentswatch<br/>live AIS stream] --> ING
-    FH[Barentswatch<br/>Fish Health API] --> ING
-    ING[Ingest service<br/>Node/TypeScript] -->|batched inserts| DB[(PostgreSQL<br/>TimescaleDB + PostGIS)]
-    DB --> API[API layer<br/>Spring Boot]
-    API -->|REST + WebSocket| WEB[Dashboard<br/>React + MapLibre GL]
-    API --> GAP[Gap detection job<br/>rule-based, scheduled]
-    GAP -->|webhook| ALERT[Alerting]
+    BW["Barentswatch live AIS stream"]
+    FH["Barentswatch Fish Health API"]
+    ING["Ingest service - Node/TypeScript"]
+    DB[("PostgreSQL - TimescaleDB + PostGIS")]
+    API["API layer - Spring Boot"]
+    WEB["Dashboard - React + MapLibre GL"]
+    GAP["Gap detection job - scheduled"]
+    ALERT["Webhook alerting"]
+
+    BW --> ING
+    FH --> ING
+    ING -- "batched inserts" --> DB
+    DB --> API
+    API -- "REST + WebSocket" --> WEB
+    API --> GAP
+    GAP --> ALERT
 ```
 
 The ingest service and the API are deliberately decoupled — they share only
